@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>pastebucket</title>
+		<link rel="stylesheet" href="/assets/styles.css">
+	</head>
+	<body>
+		<header>
+			<h1><a href="{{ url }}">pastebucket</a></h1>
+			<hr>
+			<ul>
+				<li>
+					<code>
+						<span>&lt;command&gt;</span><span>&nbsp;| curl -F 'paste=&lt;-' {{ url }}</span>
+					</code>
+				</li>
+				<li>
+					<code>
+						<span>curl -F 'paste=&lt;-' {{ url }} &lt;&nbsp;</span><span>&lt;file&gt;</span>
+					</code>
+				</li>
+			</ul>
+		</header>
+		<form action="/" method="post">
+			<textarea id="paste_area" autofocus name="text" onkeydown="ctrl_enter(event);"></textarea>
+			<p><input id="paste_button" type="submit" value="submit"></p>
+		</form>
+		<script>
+			function ctrl_enter(e) {
+				if (e.keyCode == 13 && e.ctrlKey) {
+					document.getElementById("paste_button").click();
+				}
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>pastebucket :: {{id}}</title>
+		<link rel="stylesheet" href="/assets/styles.css">
+	</head>
+	<body>
+		<header>
+			<h1><a href="{{url}}">pastebucket</a></h1>
+			<hr>
+		</header>
+		<nav>
+			<ul>
+				<li><a href="{{url}}/{{id}}"><strong>{{id}}</strong></a></li>
+				<li><a href="{{url}}/{{id}}/edit">edit</a></li>
+				<li><a href="{{url}}/{{id}}/raw">raw</a></li>
+			</ul>
+		</nav>
+		<main>
+			<div>
+				{{~#each paste}}
+				<div id="{{this.index}}" onmouseover="document.getElementById('{{this.index}}').firstElementChild.firstElementChild.style = 'color: red'" onmouseout="document.getElementById('{{this.index}}').firstElementChild.firstElementChild.style = 'color: lightcoral'">
+					<div class="index" style="width: {{../index_width}}ch"><a href="#{{this.index}}">{{this.index}}</a></div><div class="line">{{this.line}}</div>
+				</div>
+				{{~/each}}
+			</div>
+		</main>
+	</body>
+</html>
