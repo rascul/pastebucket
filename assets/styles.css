@@ -1,0 +1,154 @@
+body {
+	background-color: #f8f8f8;
+	font-family: monospace;
+	text-align: center;
+}
+
+a {
+	color: blue;
+	text-decoration: none;
+}
+
+a:hover {
+	color: royalblue;
+}
+
+div.error_description {
+	margin: 0 auto;
+	max-width: 90vw;
+}
+
+div.error_description > h2 {
+	color: red;
+}
+
+header > hr {
+	border: 0;
+	border-top: 1px solid lightgray;
+	width: 90vw;
+}
+
+header > ul {
+	padding: 0;
+}
+
+header > ul > li {
+	list-style: none;
+}
+
+header > ul > li > code {
+	background-color: floralwhite;
+	color: firebrick;
+	padding: 2px 5px;
+}
+
+header > ul > li > code > span {
+	display: inline-block;
+}
+
+nav {
+	display: block;
+}
+
+nav > ul {
+	padding: 0;
+}
+
+nav > ul > li {
+	display: inline-block;
+	list-style: none;
+	padding: 0 2ch;
+}
+
+
+form > textarea {
+	background-color: white;
+	border: 1px solid lightgray;
+	border-radius: .5ch;
+	box-shadow: .1ch .1ch .25ch rgba(0, 0, 0, .45);
+	height: 400px;
+	padding: .5ch;
+	tab-size: 4;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	width: 120ch;
+}
+
+form > p > input {
+	background-color: white;
+	border: 1px lightgray solid;
+	border-radius: .5ch;
+	box-shadow: .1ch .1ch .25ch rgba(0, 0, 0, .45);
+	color: blue;
+	padding: .5ch;
+}
+
+form > p > input:hover {
+	background-color: #fcfcfc;
+	box-shadow: .1ch .1ch .25ch rgba(0, 0, 128, .45);
+	color: royalblue;
+}
+
+main {
+	text-align: center;
+}
+
+main > div {
+	overflow-wrap: break-word;
+	background-color: white;
+	border: 1px solid lightgray;
+	border-radius: .5ch;
+	box-shadow: .1ch .1ch .25ch rgba(0, 0, 0, .45);
+	counter-reset: line;
+	display: inline-block;
+	padding: .5rem;
+	text-align: left;
+	white-space: nowrap;
+}
+
+main > div > div {
+	border-bottom: 1px dashed #eee;
+}
+
+main > div > div:last-child {
+	border-bottom: none;
+}
+
+main > div > div:hover {
+	background-color: floralwhite;
+}
+
+main > div > div > div {
+	display: inline-block;
+	line-height: 1rem;
+	vertical-align: middle;
+}
+
+main > div > div > div.index {
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+	text-align: right;
+	height: 100%;
+}
+
+main > div > div > div.index > a {
+	color: lightcoral;
+}
+
+main > div > div > div.index > a:hover {
+	color: red;
+}
+
+
+main > div > div > div.line {
+	white-space: pre-wrap;
+	max-width: 80vw;
+	tab-size: 4;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	padding-left: 1ch;
+	border-left: 1px solid lightgray;
+	margin-left: 1ch;
+	min-height: 1rem;
+}
