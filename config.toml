@@ -1,0 +1,8 @@
+[site]
+url = "http://localhost:3000"
+serve = "localhost:3000"
+
+[paths]
+templates = "templates"
+assets = "assets"
+data = "data"
