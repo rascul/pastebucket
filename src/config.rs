@@ -5,20 +5,20 @@ use std::path::Path;
 
 use toml;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Site {
 	pub url: String,
 	pub serve: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Paths {
 	pub templates: String,
 	pub assets: String,
 	pub data: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Config {
 	pub site: Site,
 	pub paths: Paths,
