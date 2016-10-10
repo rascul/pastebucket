@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::error::Error;
 
 use handlebars_iron::Template;
 use iron::modifiers::Redirect;
@@ -21,6 +20,7 @@ struct PasteParams {
 	paste: BTreeMap<usize, String>,
 }
 
+// not an exact representation of the struct in json, but this better suits the need
 impl ToJson for PasteParams {
 	fn to_json(&self) -> Json {
 		let mut json = BTreeMap::new();
@@ -87,7 +87,7 @@ fn index_post(req: &mut Request, config: Config) -> IronResult<Response> {
 	
 	let map = match req.get_ref::<Params>() {
 		Ok(r) => r,
-		Err(e) => {
+		Err(_) => {
 			params.insert("code".to_string(), "400".to_string());
 			params.insert("description".to_string(), "Bad Request: Invalid POST data".to_string());
 			res.set_mut(Template::new("error", params)).set_mut(status::BadRequest);
@@ -104,7 +104,7 @@ fn index_post(req: &mut Request, config: Config) -> IronResult<Response> {
 				let res = Response::with((status::Found, Redirect(redirect_url)));
 				return Ok(res);
 			},
-			Err(e) => {
+			Err(_) => {
 				params.insert("code".to_string(), "409".to_string());
 				params.insert(
 					"description".to_string(),
