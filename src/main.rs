@@ -4,6 +4,7 @@ extern crate iron;
 extern crate logger;
 extern crate mount;
 extern crate params;
+extern crate persistent;
 extern crate router;
 extern crate rustc_serialize;
 extern crate staticfile;
@@ -21,6 +22,7 @@ use handlebars_iron::{DirectorySource, HandlebarsEngine};
 use iron::prelude::{Chain, Iron};
 use logger::Logger;
 use mount::Mount;
+use persistent::Read;
 use staticfile::Static;
 
 use config::*;
@@ -45,7 +47,7 @@ fn main() {
 		std::process::exit(2);
 	}
 	
-	let router = routes::build(config.clone());
+	let router = routes::build();
 	
 	let mut mount = Mount::new();
 	mount.mount("/", router);
@@ -63,6 +65,7 @@ fn main() {
 	
 	let mut chain = Chain::new(mount);
 	chain.link_before(logger_before);
+	chain.link_before(Read::<Config>::one(config.clone()));
 	chain.link_after(handlebars);
 	chain.link_after(logger_after);
 	

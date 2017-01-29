@@ -3,6 +3,7 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 
+use iron::typemap::Key;
 use toml;
 
 #[derive(Clone)]
@@ -38,6 +39,10 @@ impl Config {
 			},
 		}
 	}
+}
+
+impl Key for Config {
+	type Value = Config;
 }
 
 pub fn load<T: AsRef<Path>>(path: T) -> Config {

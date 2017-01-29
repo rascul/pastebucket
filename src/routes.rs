@@ -7,6 +7,7 @@ use iron::mime::{Mime, SubLevel, TopLevel};
 use iron::prelude::*;
 use iron::{status, Url};
 use params::{Params, Value};
+use persistent::Read;
 use router::Router;
 use rustc_serialize::json::{Json, ToJson};
 
@@ -40,46 +41,29 @@ impl ToJson for PasteParams {
 	}
 }
 
-pub fn build(config: Config) -> Router {
+pub fn build() -> Router {
 	let mut router = Router::new();
 	
-	let c = config.clone();
-	router.get("/", move |req: &mut Request, | {
-		index_get(req, c.clone())
-	}, "index");
-	
-	let c = config.clone();
-	router.post("/", move |req: &mut Request| {
-		index_post(req, c.clone())
-	}, "index");
-	
-	let c = config.clone();
-	router.get("/:id", move |req: &mut Request| {
-		show_paste(req, c.clone())
-	}, "show_paste");
-	
-	let c = config.clone();
-	router.get("/:id/raw", move |req: &mut Request| {
-		show_raw(req, c.clone())
-	}, "show_raw");
-	
-	let c = config.clone();
-	router.get("/:id/edit", move |req: &mut Request| {
-		edit_paste(req, c.clone())
-	}, "edit_paste");
+	router.get("/", index_get, "index");
+	router.post("/", index_post, "index");
+	router.get("/:id", show_paste, "show_paste");
+	router.get("/:id/raw", show_raw, "show_raw");
+	router.get("/:id/edit", edit_paste, "edit_paste");
 	
 	router
 }
 
-fn index_get(_: &mut Request, config: Config) -> IronResult<Response> {
+fn index_get(req: &mut Request) -> IronResult<Response> {
+	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
 	let mut params: BTreeMap<String, String> = BTreeMap::new();
-	params.insert("url".to_string(), config.site.url);
+	params.insert("url".to_string(), config.site.url.clone());
 	res.set_mut(Template::new("index", params)).set_mut(status::Ok);
 	Ok(res)
 }
 
-fn index_post(req: &mut Request, config: Config) -> IronResult<Response> {
+fn index_post(req: &mut Request) -> IronResult<Response> {
+	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
 	
 	let mut params:BTreeMap<String, String> = BTreeMap::new();
@@ -142,7 +126,8 @@ fn index_post(req: &mut Request, config: Config) -> IronResult<Response> {
 	}
 }
 
-fn show_paste(req: &mut Request, config: Config) -> IronResult<Response> {
+fn show_paste(req: &mut Request) -> IronResult<Response> {
+	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
 	let mut params: BTreeMap<String, String> = BTreeMap::new();
 	params.insert("url".to_string(), config.site.url.clone());
@@ -171,7 +156,8 @@ fn show_paste(req: &mut Request, config: Config) -> IronResult<Response> {
 	}
 }
 
-fn show_raw(req: &mut Request, config: Config) -> IronResult<Response> {
+fn show_raw(req: &mut Request) -> IronResult<Response> {
+	let config = req.get::<Read<Config>>().unwrap();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
 	if let Ok(paste) = load(config.paths.data.clone(), id.to_string()) {
@@ -192,7 +178,8 @@ fn show_raw(req: &mut Request, config: Config) -> IronResult<Response> {
 	}
 }
 
-fn edit_paste(req: &mut Request, config: Config) -> IronResult<Response> {
+fn edit_paste(req: &mut Request) -> IronResult<Response> {
+	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
 	let mut params: BTreeMap<String, String> = BTreeMap::new();
 	params.insert("url".to_string(), config.site.url.clone());
