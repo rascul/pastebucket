@@ -4,6 +4,12 @@ body {
 	text-align: center;
 }
 
+.no-select {
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-user-select: none;
+}
+
 a {
 	color: blue;
 	text-decoration: none;
@@ -125,9 +131,6 @@ main > div > div > div {
 }
 
 main > div > div > div.index {
-	-moz-user-select: none;
-	-ms-user-select: none;
-	-webkit-user-select: none;
 	text-align: right;
 	height: 100%;
 }
