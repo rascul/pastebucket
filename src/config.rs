@@ -47,9 +47,9 @@ impl Key for Config {
 
 pub fn load<T: AsRef<Path>>(path: T) -> Config {
 	fn read<T: AsRef<Path>>(path: T) -> Result<String, io::Error> {
-		let mut file = try!(fs::File::open(path.as_ref()));
+		let mut file = fs::File::open(path.as_ref())?;
 		let mut buf = String::new();
-		try!(file.read_to_string(&mut buf));
+		file.read_to_string(&mut buf)?;
 		Ok(buf)
 	}
 

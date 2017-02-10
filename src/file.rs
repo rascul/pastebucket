@@ -61,9 +61,9 @@ pub fn store(data: String, text: String) -> Result<String, io::Error> {
 		path.push(s.clone());
 		
 		if !path.exists() {
-			let file = try!(File::create(path));
+			let file = File::create(path)?;
 			let mut buf = BufWriter::new(file);
-			try!(buf.write_all(text.as_bytes()));
+			buf.write_all(text.as_bytes())?;
 			return Ok(s);
 		}
 	}
