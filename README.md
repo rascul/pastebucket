@@ -1,3 +1,5 @@
+requires rust 1.13 or later
+
 https://p.rascul.xyz
 
 ~~~
