@@ -7,6 +7,8 @@ extern crate params;
 extern crate persistent;
 extern crate router;
 extern crate rustc_serialize;
+#[macro_use]
+extern crate serde_derive;
 extern crate staticfile;
 extern crate toml;
 
@@ -62,7 +64,13 @@ fn load_templates(path: String) -> HandlebarsEngine {
 }
 
 fn main() {
-	let config = load("config.toml");
+	let config = match load("config.toml") {
+		Ok(c) => c,
+		Err(e) => {
+			println!("couldn't load config: config.toml: {}", e.description());
+			std::process::exit(5)
+		},
+	};
 	
 	let dir = PathBuf::from(config.paths.data.clone());
 	if !dir.exists() {
