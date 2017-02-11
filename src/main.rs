@@ -17,8 +17,13 @@ mod routes;
 use std::error::Error;
 use std::fs::create_dir;
 use std::path::{Path, PathBuf};
+#[cfg(feature = "watch")]
+use std::sync::Arc;
 
 use handlebars_iron::{DirectorySource, HandlebarsEngine};
+#[cfg(feature = "watch")]
+use handlebars_iron::Watchable;
+
 use iron::prelude::{Chain, Iron};
 use logger::Logger;
 use mount::Mount;
@@ -26,6 +31,35 @@ use persistent::Read;
 use staticfile::Static;
 
 use config::*;
+
+#[cfg(feature = "watch")]
+fn load_templates(path: String) -> Arc<HandlebarsEngine> {
+	let mut handlebars = HandlebarsEngine::new();
+	handlebars.add(Box::new(DirectorySource::new(path.as_str(), ".hbs")));
+	
+	if let Err(r) = handlebars.reload() {
+		println!("{}", r.description());
+		std::process::exit(3);
+	}
+	
+	let handlebars_ref = Arc::new(handlebars);
+	handlebars_ref.watch(path.as_str());
+	
+	handlebars_ref
+}
+
+#[cfg(not(feature = "watch"))]
+fn load_templates(path: String) -> HandlebarsEngine {
+	let mut handlebars = HandlebarsEngine::new();
+	handlebars.add(Box::new(DirectorySource::new(path.as_str(), ".hbs")));
+	
+	if let Err(r) = handlebars.reload() {
+		println!("{}", r.description());
+		std::process::exit(3);
+	}
+	
+	handlebars
+}
 
 fn main() {
 	let config = load("config.toml");
@@ -53,20 +87,15 @@ fn main() {
 	mount.mount("/", router);
 	mount.mount("/assets", Static::new(Path::new(config.paths.assets.as_str())));
 	
-	let mut handlebars = HandlebarsEngine::new();
-	handlebars.add(Box::new(DirectorySource::new(config.paths.templates.as_str(), ".hbs")));
-	
-	if let Err(r) = handlebars.reload() {
-		println!("{}", r.description());
-		std::process::exit(3);
-	}
+	//let handlebars = load_templates(config.paths.templates.clone());
 	
 	let (logger_before, logger_after) = Logger::new(None);
 	
 	let mut chain = Chain::new(mount);
 	chain.link_before(logger_before);
 	chain.link_before(Read::<Config>::one(config.clone()));
-	chain.link_after(handlebars);
+	//chain.link_after(handlebars);
+	chain.link_after(load_templates(config.paths.templates.clone()));
 	chain.link_after(logger_after);
 	
 	match Iron::new(chain).http(config.site.serve.as_str()) {
@@ -77,3 +106,5 @@ fn main() {
 		}
 	};
 }
+
+	
