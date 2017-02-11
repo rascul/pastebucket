@@ -87,14 +87,11 @@ fn main() {
 	mount.mount("/", router);
 	mount.mount("/assets", Static::new(Path::new(config.paths.assets.as_str())));
 	
-	//let handlebars = load_templates(config.paths.templates.clone());
-	
 	let (logger_before, logger_after) = Logger::new(None);
 	
 	let mut chain = Chain::new(mount);
 	chain.link_before(logger_before);
 	chain.link_before(Read::<Config>::one(config.clone()));
-	//chain.link_after(handlebars);
 	chain.link_after(load_templates(config.paths.templates.clone()));
 	chain.link_after(logger_after);
 	
