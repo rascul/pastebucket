@@ -39,5 +39,3 @@ pub fn load<T: AsRef<Path>>(path: T) -> Result<Config, io::Error> {
 		Err(e) => Err(io::Error::new(io::ErrorKind::Other, e)),
 	}
 }
-
-
