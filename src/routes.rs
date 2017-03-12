@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use handlebars_iron::Template;
 use iron::modifiers::Redirect;
 use iron::headers::ContentType;
@@ -29,25 +27,25 @@ pub fn build() -> Router {
 fn index_get(req: &mut Request) -> IronResult<Response> {
 	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
-	let mut params: BTreeMap<String, String> = BTreeMap::new();
-	params.insert("url".to_string(), config.site.url.clone());
-	res.set_mut(Template::new("index", params)).set_mut(status::Ok);
+	let mut paste: Paste = Default::default();
+	paste.add_param("url", config.site.url.clone());
+	res.set_mut(Template::new("index", paste)).set_mut(status::Ok);
 	Ok(res)
 }
 
 fn index_post(req: &mut Request) -> IronResult<Response> {
 	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
+	let mut paste: Paste = Default::default();
 	
-	let mut params:BTreeMap<String, String> = BTreeMap::new();
-	params.insert("url".to_string(), config.site.url.clone());
+	paste.add_param("url", config.site.url.clone());
 	
 	let map = match req.get_ref::<params::Params>() {
 		Ok(r) => r,
 		Err(_) => {
-			params.insert("code".to_string(), "400".to_string());
-			params.insert("description".to_string(), "Bad Request: Invalid POST data".to_string());
-			res.set_mut(Template::new("error", params)).set_mut(status::BadRequest);
+			paste.add_param("code", "400");
+			paste.add_param("description", "Bad Request: Invalid POST data");
+			res.set_mut(Template::new("error", paste)).set_mut(status::BadRequest);
 			return Ok(res);
 		},
 	};
@@ -62,12 +60,9 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 				return Ok(res);
 			},
 			Err(_) => {
-				params.insert("code".to_string(), "409".to_string());
-				params.insert(
-					"description".to_string(),
-					"Conflict: Unable to generate unique ID".to_string()
-				);
-				res.set_mut(Template::new("error", params)).set_mut(status::Conflict);
+				paste.add_param("code", "409");
+				paste.add_param("description", "Conflict: Unable to generate unique ID");
+				res.set_mut(Template::new("error", paste)).set_mut(status::Conflict);
 				return Ok(res);
 			},
 		};
@@ -92,9 +87,9 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 			},
 		};
 	} else {
-		params.insert("code".to_string(), "400".to_string());
-		params.insert("description".to_string(), "Bad Request: Invalid POST data".to_string());
-		res.set_mut(Template::new("error", params)).set_mut(status::BadRequest);
+		paste.add_param("code", "400");
+		paste.add_param("description", "Bad Request: Invalid POST data");
+		res.set_mut(Template::new("error", paste)).set_mut(status::BadRequest);
 		return Ok(res);
 	}
 }
@@ -105,23 +100,20 @@ fn show_paste(req: &mut Request) -> IronResult<Response> {
 	let mut paste: Paste = Default::default();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
-	paste.add_param("url".to_string(), config.site.url.clone());
-	paste.add_param("id".to_string(), id.to_string());
+	paste.add_param("url", config.site.url.clone());
+	paste.add_param("id", id);
 	
 	if let Ok(raw) = load(config.paths.data.clone(), id.to_string()) {
 		let lines: Vec<String> = raw.lines().map(|s| s.to_string()).collect();
 		for i in 0..lines.len() {
 			paste.add_line(i + 1, lines[i].clone());
 		}
-		paste.add_param("index_width".to_string(), format!("{}", format!("{}", lines.len()).len()));
+		paste.add_param("index_width", format!("{}", format!("{}", lines.len()).len()));
 		res.set_mut(Template::new("paste", paste)).set_mut(status::Ok);
 		return Ok(res)
 	} else {
-		paste.add_param("code".to_string(), "404".to_string());
-		paste.add_param(
-			"description".to_string(),
-			"Not Found: Requested ID doesn't exist.".to_string()
-		);
+		paste.add_param("code", "404");
+		paste.add_param("description", "Not Found: Requested ID doesn't exist.");
 		res.set_mut(Template::new("error", paste)).set_mut(status::NotFound);
 		return Ok(res)
 	}
@@ -137,14 +129,11 @@ fn show_raw(req: &mut Request) -> IronResult<Response> {
 		return Ok(res);
 	} else {
 		let mut res = Response::new();
-		let mut params: BTreeMap<String, String> = BTreeMap::new();
-		params.insert("url".to_string(), config.site.url.clone());
-		params.insert("code".to_string(), "404".to_string());
-		params.insert(
-			"description".to_string(),
-			"Not Found: Requested ID doesn't exist".to_string()
-		);
-		res.set_mut(Template::new("error", params)).set_mut(status::NotFound);
+		let mut paste: Paste = Default::default();
+		paste.add_param("url", config.site.url.clone());
+		paste.add_param("code", "404");
+		paste.add_param("description", "Not Found: Requested ID doesn't exist.");
+		res.set_mut(Template::new("error", paste)).set_mut(status::NotFound);
 		return Ok(res);
 	}
 }
@@ -155,22 +144,22 @@ fn edit_paste(req: &mut Request) -> IronResult<Response> {
 	let mut paste: Paste = Default::default();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
-	paste.add_param("url".to_string(), config.site.url.clone());
-	paste.add_param("id".to_string(), id.to_string());
+	paste.add_param("url", config.site.url.clone());
+	paste.add_param("id", id);
 	
 	if let Ok(raw) = load(config.paths.data.clone(), id.to_string()) {
 		let lines: Vec<String> = raw.lines().map(|s| s.to_string()).collect();
 		for i in 0..lines.len() {
 			paste.add_line(i + 1, lines[i].clone());
 		}
-		paste.add_param("index_width".to_string(), format!("{}", format!("{}", lines.len()).len()));
+		paste.add_param("index_width", format!("{}", format!("{}", lines.len()).len()));
 		res.set_mut(Template::new("edit", paste)).set_mut(status::Ok);
 		return Ok(res)
 	} else {
-		paste.add_param("code".to_string(), "404".to_string());
+		paste.add_param("code", "404");
 		paste.add_param(
-			"description".to_string(),
-			"Not Found: Requested ID doesn't exist.".to_string()
+			"description",
+			"Not Found: Requested ID doesn't exist."
 		);
 		res.set_mut(Template::new("error", paste)).set_mut(status::NotFound);
 		return Ok(res)
