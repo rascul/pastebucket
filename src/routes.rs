@@ -6,40 +6,13 @@ use iron::headers::ContentType;
 use iron::mime::{Mime, SubLevel, TopLevel};
 use iron::prelude::*;
 use iron::{status, Url};
-use params::{Params, Value};
+use params;
 use persistent::Read;
 use router::Router;
-use rustc_serialize::json::{Json, ToJson};
 
 use config::Config;
 use file::{load, store};
-
-#[derive(Default)]
-#[derive(RustcEncodable)]
-struct PasteParams {
-	params: BTreeMap<String, String>,
-	paste: BTreeMap<usize, String>,
-}
-
-// not an exact representation of the struct in json, but this better suits the need
-impl ToJson for PasteParams {
-	fn to_json(&self) -> Json {
-		let mut json = BTreeMap::new();
-		for (key, value) in self.params.clone() {
-			json.insert(key, value.to_json());
-		}
-		let mut lines = Vec::new();
-		for (key, value) in self.paste.clone() {
-			let mut line = BTreeMap::new();
-			line.insert("index".to_string(), key.to_json());
-			line.insert("line".to_string(), value.to_json());
-			lines.push(line);
-		}
-		json.insert("paste".to_string(), lines.to_json());
-		json.insert("index_width".to_string(), format!("{}", lines.len()).len().to_json());
-		Json::Object(json)
-	}
-}
+use paste::Paste;
 
 pub fn build() -> Router {
 	let mut router = Router::new();
@@ -69,7 +42,7 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 	let mut params:BTreeMap<String, String> = BTreeMap::new();
 	params.insert("url".to_string(), config.site.url.clone());
 	
-	let map = match req.get_ref::<Params>() {
+	let map = match req.get_ref::<params::Params>() {
 		Ok(r) => r,
 		Err(_) => {
 			params.insert("code".to_string(), "400".to_string());
@@ -79,7 +52,7 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 		},
 	};
 	
-	if let Some(&Value::String(ref text)) = map.get("text") {
+	if let Some(&params::Value::String(ref text)) = map.get("text") {
 		match store(config.paths.data.clone(), text.clone()) {
 			Ok(id) => {
 				let redirect_url = Url::parse(format!(
@@ -98,7 +71,7 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 				return Ok(res);
 			},
 		};
-	} else if let Some(&Value::String(ref paste)) = map.get("paste") {
+	} else if let Some(&params::Value::String(ref paste)) = map.get("paste") {
 		match store(config.paths.data.clone(), paste.clone()) {
 			Ok(id) => {
 				let redirect_url = Url::parse(format!(
@@ -129,30 +102,28 @@ fn index_post(req: &mut Request) -> IronResult<Response> {
 fn show_paste(req: &mut Request) -> IronResult<Response> {
 	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
-	let mut params: BTreeMap<String, String> = BTreeMap::new();
-	params.insert("url".to_string(), config.site.url.clone());
+	let mut paste: Paste = Default::default();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
-	if let Ok(paste) = load(config.paths.data.clone(), id.to_string()) {
-		let mut params: PasteParams = Default::default();
-		params.params.insert("url".to_string(), config.site.url.clone());
-		params.params.insert("id".to_string(), id.to_string());
-		
-		let lines: Vec<String> = paste.lines().map(|s| s.to_owned()).collect();
+	paste.add_param("url".to_string(), config.site.url.clone());
+	paste.add_param("id".to_string(), id.to_string());
+	
+	if let Ok(raw) = load(config.paths.data.clone(), id.to_string()) {
+		let lines: Vec<String> = raw.lines().map(|s| s.to_string()).collect();
 		for i in 0..lines.len() {
-			params.paste.insert(i + 1, lines[i].clone());
+			paste.add_line(i + 1, lines[i].clone());
 		}
-		
-		res.set_mut(Template::new("paste", params)).set_mut(status::Ok);
-		return Ok(res);
+		paste.add_param("index_width".to_string(), format!("{}", format!("{}", lines.len()).len()));
+		res.set_mut(Template::new("paste", paste)).set_mut(status::Ok);
+		return Ok(res)
 	} else {
-		params.insert("code".to_string(), "404".to_string());
-		params.insert(
+		paste.add_param("code".to_string(), "404".to_string());
+		paste.add_param(
 			"description".to_string(),
-			"Not Found: Requested ID doesn't exist".to_string()
+			"Not Found: Requested ID doesn't exist.".to_string()
 		);
-		res.set_mut(Template::new("error", params)).set_mut(status::NotFound);
-		return Ok(res);
+		res.set_mut(Template::new("error", paste)).set_mut(status::NotFound);
+		return Ok(res)
 	}
 }
 
@@ -160,8 +131,8 @@ fn show_raw(req: &mut Request) -> IronResult<Response> {
 	let config = req.get::<Read<Config>>().unwrap();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
-	if let Ok(paste) = load(config.paths.data.clone(), id.to_string()) {
-		let mut res = Response::with((status::Ok, paste));
+	if let Ok(raw) = load(config.paths.data.clone(), id.to_string()) {
+		let mut res = Response::with((status::Ok, raw));
 		res.headers.set(ContentType(Mime(TopLevel::Text, SubLevel::Plain, vec![])));
 		return Ok(res);
 	} else {
@@ -181,29 +152,27 @@ fn show_raw(req: &mut Request) -> IronResult<Response> {
 fn edit_paste(req: &mut Request) -> IronResult<Response> {
 	let config = req.get::<Read<Config>>().unwrap();
 	let mut res = Response::new();
-	let mut params: BTreeMap<String, String> = BTreeMap::new();
-	params.insert("url".to_string(), config.site.url.clone());
+	let mut paste: Paste = Default::default();
 	let id = req.extensions.get::<Router>().unwrap().find("id").unwrap();
 	
-	if let Ok(paste) = load(config.paths.data.clone(), id.to_string()) {
-		let mut params: PasteParams = Default::default();
-		params.params.insert("url".to_string(), config.site.url.clone());
-		params.params.insert("id".to_string(), id.to_string());
-		
-		let lines: Vec<String> = paste.lines().map(|s| s.to_owned()).collect();
+	paste.add_param("url".to_string(), config.site.url.clone());
+	paste.add_param("id".to_string(), id.to_string());
+	
+	if let Ok(raw) = load(config.paths.data.clone(), id.to_string()) {
+		let lines: Vec<String> = raw.lines().map(|s| s.to_string()).collect();
 		for i in 0..lines.len() {
-			params.paste.insert(i + 1, lines[i].clone());
+			paste.add_line(i + 1, lines[i].clone());
 		}
-		
-		res.set_mut(Template::new("edit", params)).set_mut(status::Ok);
-		return Ok(res);
+		paste.add_param("index_width".to_string(), format!("{}", format!("{}", lines.len()).len()));
+		res.set_mut(Template::new("edit", paste)).set_mut(status::Ok);
+		return Ok(res)
 	} else {
-		params.insert("code".to_string(), "404".to_string());
-		params.insert(
+		paste.add_param("code".to_string(), "404".to_string());
+		paste.add_param(
 			"description".to_string(),
-			"Not Found: Requested ID doesn't exist".to_string()
+			"Not Found: Requested ID doesn't exist.".to_string()
 		);
-		res.set_mut(Template::new("error", params)).set_mut(status::NotFound);
-		return Ok(res);
+		res.set_mut(Template::new("error", paste)).set_mut(status::NotFound);
+		return Ok(res)
 	}
 }
