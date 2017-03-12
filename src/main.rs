@@ -16,6 +16,7 @@ mod file;
 mod paste;
 mod routes;
 
+use std::env::var;
 use std::error::Error;
 use std::fs::create_dir;
 use std::path::{Path, PathBuf};
@@ -103,8 +104,14 @@ fn main() {
 	chain.link_after(load_templates(config.paths.templates.clone()));
 	chain.link_after(logger_after);
 	
+	let serve = if var("HOST").is_ok() && var("PORT").is_ok() {
+		format!("{}:{}", var("HOST").unwrap(), var("PORT").unwrap())
+	} else {
+		config.site.serve.clone()
+	};
+	
 	match Iron::new(chain).http(config.site.serve.as_str()) {
-		Ok(_) => println!("listening on http://{}", config.site.serve),
+		Ok(_) => println!("listening on http://{}", serve),
 		Err(e) => {
 			println!("{}", e.description());
 			std::process::exit(4);
