@@ -2,19 +2,19 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>pastebucket :: {{id}} :: edit</title>
+		<title>pastebucket :: {{params.id}} :: edit</title>
 		<link rel="stylesheet" href="/assets/styles.css">
 	</head>
 	<body>
 		<header>
-			<h1><a href="{{url}}">pastebucket</a></h1>
+			<h1><a href="{{params.url}}">pastebucket</a></h1>
 			<hr>
 		</header>
 		<nav>
 			<ul>
-				<li><a href="{{url}}/{{id}}">{{id}}</a></li>
-				<li><a href="{{url}}/{{id}}/edit"><strong>edit</strong></a></li>
-				<li><a href="{{url}}/{{id}}/raw">raw</a></li>
+				<li><a href="{{params.url}}/{{params.id}}">{{params.id}}</a></li>
+				<li><a href="{{params.url}}/{{params.id}}/edit"><strong>edit</strong></a></li>
+				<li><a href="{{params.url}}/{{params.id}}/raw">raw</a></li>
 			</ul>
 		</nav>
 		<form action="/" method="post">
