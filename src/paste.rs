@@ -13,14 +13,14 @@ pub struct Line {
 }
 
 impl Paste {
-	pub fn add_param(&mut self, key: String, value: String) {
-		self.params.insert(key, value);
+	pub fn add_param<S1: Into<String>, S2: Into<String>>(&mut self, key: S1, value: S2) {
+		self.params.insert(key.into(), value.into());
 	}
 	
-	pub fn add_line(&mut self, index: usize, line: String) {
+	pub fn add_line<S: Into<String>>(&mut self, index: usize, line: S) {
 		self.paste.push(Line {
 			index: index,
-			line: line,
+			line: line.into(),
 		});
 	}
 }
