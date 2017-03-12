@@ -6,7 +6,6 @@ extern crate mount;
 extern crate params;
 extern crate persistent;
 extern crate router;
-extern crate rustc_serialize;
 #[macro_use]
 extern crate serde_derive;
 extern crate staticfile;
@@ -14,6 +13,7 @@ extern crate toml;
 
 mod config;
 mod file;
+mod paste;
 mod routes;
 
 use std::error::Error;
